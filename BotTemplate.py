@@ -1,4 +1,5 @@
 import discord
+from CONFIG import token
 import datetime
 import pytz
 import os
@@ -11,13 +12,18 @@ mst_now = time.astimezone(pytz.timezone('America/Denver'))
 mst_format= mst_now.strftime("%Y/%m/%d %H:%M:%S")
 
 intents = discord.Intents.all()
-bot = Bot(command_prefix='.', intents = intents)
-TOKEN = '[token here]'
+bot = Bot(command_prefix='!', intents = intents)
+TOKEN = token
 
 @bot.event
 async def on_ready():
   await bot.change_presence(activity=discord.Game('ALL SYSTEMS GREEN'))
   print(f'Bot connected as {bot.user}')
   print(mst_format)
+  try:
+    synced = await bot.tree.sync()
+    print(f"Synced {len(synced)} commands(s)")
+  except Exception as e:
+    print(e)
 
 bot.run(TOKEN)
