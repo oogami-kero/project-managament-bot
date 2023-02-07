@@ -26,4 +26,8 @@ async def on_ready():
   except Exception as e:
     print(e)
 
+@bot.tree.command(name="ping")
+async def ping(interaction: discord.Interaction):
+  await interaction.response.send_message('Pong!', ephemeral=False)
+
 bot.run(TOKEN)
