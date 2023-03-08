@@ -26,10 +26,6 @@ async def on_ready():
       await bot.load_extension(f'cmds.{cmd_file.name[:-3]}')
   await bot.tree.sync()
 
-@bot.tree.command(name="ping", description="Checking latency")
-async def ping(interaction: discord.Interaction):
-  await interaction.response.send_message('Pong! Took {0} ms'.format(round(bot.latency, 1)))
-
 @bot.tree.command(name = 'help', description = 'Help Command')
 async def help(interaction: discord.Interaction):
   embed = discord.Embed(title="DPBs Help", description="Help command for the discord productivity bot")
