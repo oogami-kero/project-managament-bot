@@ -11,8 +11,7 @@ time = datetime.datetime.now()
 mst_now = time.astimezone(pytz.timezone('America/Denver'))
 mst_format= mst_now.strftime("%Y/%m/%d %H:%M:%S")
 
-# TOKEN HERE
-# TOKEN = ''
+TOKEN = 'MTA3MDQ3NjczMDA0MjY4MzQwMg.G2svck.iswCy_zB1xwvytygeSIG6eTdxeTr5HPN4dATrA'
 
 # Bot Initialization
 
@@ -27,7 +26,7 @@ class aclient(discord.Client):
   async def on_ready(self):
     await self.wait_until_ready()
     if not self.synced:
-      await cogs.sync()
+      await tree.sync()
       self.synced = True
 
     # make ticket button persist over restarts  
@@ -37,14 +36,17 @@ class aclient(discord.Client):
       self.added = True
 
     # print ready message and set bot status  
-    await bot.change_presence(activity=discord.Game('TICKET SYSTEM PROGRESS ■■■■■■□□□□ 60%'))
+    await bot.change_presence(activity=discord.Game('TICKET SYSTEM'))
     print(f'Bot connected as {bot.user}')
     print(mst_format)
 
 bot = aclient()
-cogs = app_commands.CommandTree(bot)
+tree = app_commands.CommandTree(bot)
+
 
 #------------------------------------------------------------------------------------------------------#
+
+# Functions for Tickets
 
 
 class ticket_launcher(discord.ui.View):
@@ -70,15 +72,19 @@ class ticket_launcher(discord.ui.View):
         interaction.user: discord.PermissionOverwrite(view_channel = True,
                                                       send_messages = True,
                                                       attach_files = True,
-                                                      embed_links = True),
+                                                      embed_links = True,
+                                                      read_message_history = True),
         interaction.guild.me: discord.PermissionOverwrite(view_channel = True,
                                                            send_messages = True,
                                                            read_message_history = True)
       }
       
       # create ticket channel
+      category = discord.utils.get(interaction.guild.categories, name = "TICKETS")
+      if category is None:
+        await interaction.guild.create_category("TICKETS", position = 0)
       channel = await interaction.guild.create_text_channel(name = f"ticket-for-{interaction.user.name}-{interaction.user.discriminator}",
-                                                            overwrites = overwrites, reason = f"Ticket for {interaction.user}")
+                                                            category = category, overwrites = overwrites, reason = f"Ticket for {interaction.user}")
       await channel.send(f"{interaction.user.mention} created a ticket!", view = ticket_control())
       await interaction.response.send_message(f"I've opened a ticket for you at {channel.mention}!", ephemeral = True)
 
@@ -94,7 +100,7 @@ class confirm(discord.ui.View):
     except:
       await interaction.response.send_message("Channel could not be deleted, ensure 'manage_channels' permission is given!",
                                               ephemeral = True)
-
+# ticket management
 class ticket_control(discord.ui.View):
   def __init__(self) -> None:
     super().__init__(timeout = None)
@@ -110,7 +116,7 @@ class ticket_control(discord.ui.View):
 # Slash Commands
 
 # ticket system initialization command
-@cogs.command(name = 'ticket', description = 'Initializes the ticketing system')
+@tree.command(name = 'ticket', description = 'Initializes the ticketing system')
 @has_permissions(administrator = True)
 async def ticketing(interaction: discord.Interaction):
   embed = discord.Embed(title = "If you need support, click the button below to create a new ticket!",
@@ -119,7 +125,7 @@ async def ticketing(interaction: discord.Interaction):
   await interaction.response.send_message("Ticketing system initiated successfully", ephemeral = True)
 
 # manual ticket close command
-@cogs.command(name = 'close', description = 'Closes a ticket manually')
+@tree.command(name = 'close', description = 'Closes a ticket manually')
 async def close(interaction: discord.Interaction):
   if "ticket-for-" in interaction.channel.name:
     embed = discord.Embed(title = "Are you sure you want to close this ticket?", color = discord.Colour.brand_red())
@@ -128,7 +134,7 @@ async def close(interaction: discord.Interaction):
     await interaction.response.send_message("This can only be used in a ticket channel", ephemeral = True)
 
 # add user to ticket command
-@cogs.command(name = 'add', description = 'Adds user to existing ticket')
+@tree.command(name = 'add', description = 'Adds user to existing ticket')
 @app_commands.describe(user = "User you want to add to the ticket")
 async def add(interaction: discord.Interaction, user: discord.Member):
   if "ticket-for-" in interaction.channel.name:
@@ -137,9 +143,22 @@ async def add(interaction: discord.Interaction, user: discord.Member):
     await interaction.response.send_message(f"{user.mention} has been added to the ticket by {interaction.user.mention}!")
   else:
     await interaction.response.send_message("This can only be used in a ticket channel", ephemeral = True)
-  
 
-@cogs.error
+# remove user from ticket command
+@tree.command(name = 'remove', description = 'Removes user from existing ticket')
+@app_commands.describe(user = "User you want to remove from the ticket")
+async def remove(interaction: discord.Interaction, user: discord.Member):
+  if "ticket-for-" in interaction.channel.name:
+    await interaction.channel.set_permissions(user, overwrite = None)
+    await interaction.response.send_message(f"{user.mention} has been removed from the ticket by {interaction.user.mention}!")
+  else:
+    await interaction.response.send_message("This can only be used in a ticket channel", ephemeral = True)
+
+#------------------------------------------------------------------------------------------------------#
+
+  
+# permission check
+@tree.error
 async def command_error(bot, error):
     if isinstance(error, MissingPermissions):
         text = "You do not have permissions to do that!"
