@@ -3,6 +3,8 @@ from discord import app_commands
 from discord.utils import get
 from discord.ext import commands
 from discord.ui import Select, View
+import TicketSystem
+
 
 client = discord.Client(intents = discord.Intents.all())
 
@@ -178,7 +180,10 @@ class connectionsSelect(Select):
                 case '1': # Ticket feature is requested
                     ticket = await interaction.guild.create_category(name = 'Tickets', position = 2, reason = 'New ticketing channel')
                     channelsAdded.append(ticket)
-                    await ticket.create_text_channel(name = 'Submit-a-ticket')
+                    ticket_channel = await ticket.create_text_channel(name = 'Submit-a-ticket')
+                    embed = discord.Embed(title = "If you need support, click the button below to create a new ticket!",
+                        color = discord.Colour.dark_teal())
+                    await ticket_channel.send(embed = embed, view = TicketSystem.ticket_launcher())
 
                 case '2': # Notification feature is requested
                     # Create the cataegories for the notification system
