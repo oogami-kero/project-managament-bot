@@ -14,7 +14,7 @@ time = datetime.datetime.now()
 mst_now = time.astimezone(pytz.timezone('America/Denver'))
 mst_format= mst_now.strftime("%Y/%m/%d %H:%M:%S")
 
-TOKEN = 'MTA3MDQ3NjczMDA0MjY4MzQwMg.GKuigy.nrIPcQmH4YEronJF5ALhhaqk057WWqRJNQACdo'
+TOKEN = ''
 
 class aclient(commands.Bot):
 
